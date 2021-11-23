@@ -13,9 +13,11 @@ else:
 @st.cache
 def fetch_data():
     df = pd.read_csv('garden_trees.tsv', sep='\t')
-    return df
+    image_df = pd.read_csv('garden_edan_image_data.tsv', sep='\t')
+    return df, image_df
 
-df = fetch_data()
+df, image_df = fetch_data()
+
 gb = GridOptionsBuilder.from_dataframe(df)
 gb.configure_selection('single', use_checkbox=False)
 gb.configure_pagination(paginationAutoPageSize=True)
@@ -33,6 +35,8 @@ grid_response = AgGrid(
 
 if len(grid_response['selected_rows']):
     selected_tree = grid_response['selected_rows'][0]
+    search_id = f'SG-{selected_tree["accession_number"]}'
+    selected_images = image_df[image_df['object_id'] == search_id]['ids_id'].tolist()
 
 else:
     selected_tree = {
@@ -43,6 +47,7 @@ else:
         "life_form": "Deciduous tree",
         "media_count": 4
         }
+    selected_images = []
 
 tree_col1, tree_col2 = st.columns(2)
 with tree_col1:
@@ -50,51 +55,62 @@ with tree_col1:
     st.write('Tree ID in Winter')
 with tree_col2:
     st.write(selected_tree)
+    if selected_images is not None:
+        st.write(selected_images)
 
-with st.form('annotation'):
-    question_col1, question_col2 = st.columns(2)
+evergreen = st.radio('Is the tree deciduous or evergreen?',
+                    ['Deciduous','Evergreen','Unclear'],
+                    index=2,
+                    help='or broadleaf vs conifer??')
 
-    with question_col1:
-        evergreen = st.radio('Question 1',
-                            ['Deciduous','Evergreen','Unclear'],
-                            index=2,
-                            help='or broadleaf vs conifer??')
+pruning = st.radio('What type of pruning system is employed?',
+                    ['Natural pruning system',
+                    'Topiary pruning system',
+                    'Specialty pruning system',
+                    'Unclear'],
+                    index=3,
+                    help='Details on Question 2')
 
-        pruning = st.radio('Question 2',
-                            ['Natural pruning system',
-                            'Topiary pruning system',
-                            'Specialty pruning system',
-                            'Unclear'],
-                            index=3,
-                            help='Details on Question 2')
-
-        stem = st.radio('Question 3',
-                            ['Single-stem',
-                            'Multistem',
-                            'Clump',
-                            'Shrub',
-                            'Unclear'],
-                            index=4,
-                            help='Details on Question 3')
-
-    with question_col2:
-        branched = st.radio('Question 4',
-                            ['Low-branched',
-                            'High-branched',
-                            'Unclear'],
-                            index=2,
-                            help='Details on Question 4')
-
-        tree_form = st.radio('Question 5',
-                            ['Central leader form',
-                            'Less commonly-defined pruning form',
-                            'Unmanaged form',
+if pruning == 'Natural pruning system':
+    stem = st.radio('What form is this tree?',
+                        ['Single-stem',
+                        'Multistem',
+                        'Clump',
+                        'Shrub',
+                        'Unclear'],
+                        index=4,
+                    help='(generally initially trained to this form in the nursery)')
+    if stem == 'Single-stem':
+        tree_form = st.radio('Which training system is used?',
+                            ['Managed - central leader form',
+                             'Managed - other system',
+                            'Unmanaged',
                             'Unclear'],
                             index=3,
                             help='Details on Question 5')
-        annotator = st.radio('Who is annotating?',
-                             ['Courtney','Jake','Kayleigh'])
-    submitted = st.form_submit_button('Submit Annotation')
+
+    branched = st.radio('Is the tree high-branched or low-branched?',
+                        ['Low-branched',
+                        'High-branched',
+                        'Unclear'],
+                        index=2,
+                        help='Details on Question 4')
+elif pruning == 'Topiary pruning system':
+    hedge = st.radio('Is tree managed as hedge or individual specimen?',
+                            ['Hedge',
+                             'Individual',
+                            'Unclear'],
+                            index=2)
+elif pruning == 'Specialty pruning system':
+    specialty_pruning = st.radio('Which specialty pruning system is used?',
+                        [' Pollarding',
+                        ' Espalier (none currently present)',
+                        'Pleeching (none currently present)',
+                        'Unclear'],
+                        index=3)
+
+annotator = st.radio('Who is annotating?',
+                        ['Courtney','Jake','Kayleigh'])
 
 st.sidebar.markdown('## Annotation Progress')
 
