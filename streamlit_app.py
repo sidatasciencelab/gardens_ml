@@ -48,15 +48,19 @@ else:
         "media_count": 4
         }
     selected_images = []
+    im_to_show = 'SG-2011-1257A-WIN1-HL'
 
 tree_col1, tree_col2 = st.columns(2)
-with tree_col1:
-    st.image('https://ids.si.edu/ids/deliveryService/id/SG-2011-1257A-WIN1-HL/500')
-    st.write('Tree ID in Winter')
 with tree_col2:
     st.write(selected_tree)
-    if selected_images is not None:
-        st.write(selected_images)
+    if len(selected_images) > 0:
+        im_to_show = st.radio('Image to show',
+                              selected_images,
+                               index=0)
+with tree_col1:
+    image_url = f'https://ids.si.edu/ids/deliveryService/id/{im_to_show}/500'
+    st.image(image_url)
+    st.write(im_to_show)
 
 evergreen = st.radio('Is the tree deciduous or evergreen?',
                     ['Deciduous','Evergreen','Unclear'],
