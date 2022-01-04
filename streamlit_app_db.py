@@ -7,7 +7,7 @@ import sqlite3
 @st.experimental_singleton
 def get_sqlite_conn():
     conn = sqlite3.connect("si_garden_trees.db")
-    return connect
+    return conn
 
 conn = get_sqlite_conn()
 
@@ -124,9 +124,20 @@ elif pruning == 'Specialty pruning system':
                         index=3)
 
 annotator = st.radio('Who is annotating?',
-                        ['Courtney','Jake','Kayleigh'])
+                        ['Courtney','Jake','Kayleigh','TEST'])
+
+notes = st.text_area('Notes')
 
 st.sidebar.markdown('## Annotation Progress')
 
-st.sidebar.markdown('*458* of *1,702* trees annotated')
-st.sidebar.progress((458/1702))
+cur = conn.cursor()
+cur.execute('SELECT COUNT(DISTINCT accession_number) FROM tree_annotations')
+result = cur.fetchone()
+annotation_count = result[0]
+
+cur.execute('SELECT COUNT(*) FROM tree_metadata')
+result = cur.fetchone()
+tree_count = result[0]
+
+st.sidebar.markdown(f'*{annotation_count}* of *{tree_count}* trees annotated')
+st.sidebar.progress((annotation_count / tree_count))
